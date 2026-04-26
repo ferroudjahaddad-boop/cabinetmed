@@ -90,7 +90,7 @@ exports.updateMedecin = async (req, res) => {
   } catch (error) {
     res.status(500).json({ message: 'Erreur serveur.', error });
   }
-};
+}; // bonjour farou
 
 // ─── RENDEZ-VOUS ─────────────────────────
 // adminController.js
