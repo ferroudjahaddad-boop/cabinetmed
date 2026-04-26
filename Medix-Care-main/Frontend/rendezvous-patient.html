@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Rendez-vous — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Mon espace patient</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-patient.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li class="active"><a href="rendezvous-patient.html"><i class="fa-solid fa-calendar-check"></i> Mes Rendez-vous</a></li>
+      <li><a href="dossier-patient.html"><i class="fa-solid fa-folder-open"></i> Mon Dossier</a></li>
+      <li><a href="ordonnances-patient.html"><i class="fa-solid fa-capsules"></i> Mes Ordonnances</a></li>
+      <li><a href="factures-patient.html"><i class="fa-solid fa-file-invoice-dollar"></i> Mes Factures</a></li>
+      <li><a href="notifications-patient.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count">0</span></a></li>
+      <li><a href="profil-patient.html"><i class="fa-solid fa-user"></i> Mon Profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">PA</div>
+      <div class="user-details">
+        <span id="display-name">Patient</span>
+        <small>Patient</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="dash-content">
+    <header class="content-header">
+      <div>
+        <h1>Mes Rendez-vous</h1>
+        <p class="header-sub">Gérer vos rendez-vous</p>
+      </div>
+      <button class="btn-primary" onclick="openModal()">
+        <i class="fa-solid fa-plus"></i> Prendre un RDV
+      </button>
+    </header>
+
+    <!-- MINI STATS -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <i class="fa-solid fa-calendar-check"></i>
+        <div><strong id="stat-total">0</strong><span>Total RDV</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-clock"></i>
+        <div><strong id="stat-attente">0</strong><span>En attente</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-circle-check"></i>
+        <div><strong id="stat-confirme">0</strong><span>Confirmés</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-circle-xmark"></i>
+        <div><strong id="stat-annule">0</strong><span>Annulés</span></div>
+      </div>
+    </div>
+
+    <div class="white-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher..." oninput="filterTable()">
+        </div>
+        <select id="filter-statut" onchange="filterTable()" class="filter-select">
+          <option value="">Tous les statuts</option>
+          <option value="en_attente">En attente</option>
+          <option value="confirme">Confirmé</option>
+          <option value="annule">Annulé</option>
+          <option value="termine">Terminé</option>
+        </select>
+        <span class="total-count">Total : <strong id="count-display">0</strong></span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date & Heure</th>
+            <th>Médecin</th>
+            <th>Spécialité</th>
+            <th>Motif</th>
+            <th>Statut</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>Aucun rendez-vous</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL PRENDRE RDV -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3><i class="fa-solid fa-calendar-plus"></i> Prendre un rendez-vous</h3>
+      <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <div class="form-col full">
+          <label>Médecin *</label>
+          <select id="r-medecin">
+            <option value="">-- Choisir un médecin --</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-col full">
+          <label>Date et heure *</label>
+          <input type="datetime-local" id="r-date">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-col full">
+          <label>Motif</label>
+          <textarea id="r-motif" rows="3" placeholder="Décrivez brièvement le motif de votre visite..."></textarea>
+        </div>
+      </div>
+      <small class="form-error" id="modal-error"></small>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn-primary" onclick="submitRDV()">
+        <i class="fa-solid fa-check"></i> Confirmer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIRMATION SUPPRESSION -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Annuler le rendez-vous</h3>
+      <button class="modal-close" onclick="closeConfirm()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#6b7c9a; font-size:14px;">Voulez-vous vraiment annuler ce rendez-vous ?</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeConfirm()">Non</button>
+      <button class="btn-danger" id="confirm-delete"><i class="fa-solid fa-trash"></i> Oui, annuler</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/main.js"></script>
+<script>
+  checkAccess('patient');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let rdvList = [];
+
+  // ─── CHARGER MÉDECINS ────────────────
+  async function loadMedecins() {
+    try {
+      const res  = await fetch('/api/admin/medecins', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const sel  = document.getElementById('r-medecin');
+      data.forEach(m => {
+        const opt = document.createElement('option');
+        opt.value = m.id;
+        opt.textContent = `Dr. ${m.nom} — ${m.specialite || ''}`;
+        sel.appendChild(opt);
+      });
+    } catch (e) { console.log('Erreur médecins'); }
+  }
+
+  // ─── CHARGER RDV ─────────────────────
+  async function loadRDV() {
+    try {
+      const res  = await fetch('/api/patient/rendezvous', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      rdvList    = data;
+      renderTable(data);
+      updateStats(data);
+      document.getElementById('count-display').textContent = data.length;
+    } catch (e) { showToast('Erreur chargement RDV.', 'error'); }
+  }
+
+  // ─── STATS ───────────────────────────
+  function updateStats(data) {
+    document.getElementById('stat-total').textContent    = data.length;
+    document.getElementById('stat-attente').textContent  = data.filter(r => r.statut === 'en_attente').length;
+    document.getElementById('stat-confirme').textContent = data.filter(r => r.statut === 'confirme').length;
+    document.getElementById('stat-annule').textContent   = data.filter(r => r.statut === 'annule').length;
+  }
+
+  // ─── FILTRER ─────────────────────────
+  function filterTable() {
+    const q      = document.getElementById('search-input').value.toLowerCase();
+    const statut = document.getElementById('filter-statut').value;
+    const filtered = rdvList.filter(r => {
+      const matchQ = r.medecin_nom.toLowerCase().includes(q) || (r.motif && r.motif.toLowerCase().includes(q));
+      const matchS = !statut || r.statut === statut;
+      return matchQ && matchS;
+    });
+    renderTable(filtered);
+    document.getElementById('count-display').textContent = filtered.length;
+  }
+
+  // ─── BADGE STATUT ────────────────────
+  function badgeStatut(statut) {
+    const map = {
+      en_attente: { class: 'badge-warn',  label: '🟡 En attente' },
+      confirme:   { class: 'badge-green', label: '🟢 Confirmé'   },
+      annule:     { class: 'badge-red',   label: '🔴 Annulé'     },
+      termine:    { class: 'badge-muted', label: '⚫ Terminé'    }
+    };
+    const s = map[statut] || { class: 'badge-muted', label: statut };
+    return `<span class="badge ${s.class}">${s.label}</span>`;
+  }
+
+  // ─── AFFICHER TABLEAU ────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-calendar-xmark"></i><p>Aucun rendez-vous</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(r => `
+      <tr>
+        <td>
+          <strong>${new Date(r.date).toLocaleDateString('fr-FR')}</strong>
+          <br><small style="color:#6b7c9a">${new Date(r.date).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</small>
+        </td>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar" style="background:linear-gradient(135deg,#00c4b3,#0052d4)">
+              ${r.medecin_nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
+            </div>
+            <span>Dr. ${r.medecin_nom}</span>
+          </div>
+        </td>
+        <td><span class="badge badge-blue">${r.specialite || '—'}</span></td>
+        <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r.motif || '—'}</td>
+        <td>${badgeStatut(r.statut)}</td>
+        <td>
+          <div class="action-btns">
+            ${r.statut === 'en_attente' ? `
+              <button class="action-btn delete" onclick="confirmDelete(${r.id})" title="Annuler">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : '—'}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ─── MODAL ───────────────────────────
+  function openModal() {
+    document.getElementById('modal-error').textContent = '';
+    document.getElementById('r-medecin').value = '';
+    document.getElementById('r-date').value    = '';
+    document.getElementById('r-motif').value   = '';
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  // ─── SOUMETTRE RDV ───────────────────
+  async function submitRDV() {
+    const medecin_id = document.getElementById('r-medecin').value;
+    const date       = document.getElementById('r-date').value;
+    const motif      = document.getElementById('r-motif').value.trim();
+
+    if (!medecin_id || !date) {
+      document.getElementById('modal-error').textContent = 'Médecin et date sont obligatoires.';
+      return;
+    }
+
+    // vérifier date future
+    if (new Date(date) <= new Date()) {
+      document.getElementById('modal-error').textContent = 'La date doit être dans le futur.';
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/patient/rendezvous', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ medecin_id, date, motif })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast('✓ Rendez-vous demandé avec succès !');
+        closeModal();
+        loadRDV();
+      } else {
+        document.getElementById('modal-error').textContent = data.message;
+      }
+    } catch (e) {
+      document.getElementById('modal-error').textContent = 'Erreur serveur.';
+    }
+  }
+
+  // ─── SUPPRIMER ───────────────────────
+  function confirmDelete(id) {
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-delete').onclick = async () => {
+      try {
+        const res = await fetch(`/api/patient/rendezvous/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message);
+          closeConfirm();
+          loadRDV();
+        } else {
+          showToast(data.message, 'error');
+        }
+      } catch (e) {
+        showToast('Erreur suppression.', 'error');
+      }
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  loadMedecins();
+  loadRDV();
+</script>
+</body>
+</html>

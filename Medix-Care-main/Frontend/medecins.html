@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Médecins — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+
+  <!-- ─── SIDEBAR ─────────────────────── -->
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Système de gestion</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-admin.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="patients.html"><i class="fa-solid fa-user-group"></i> Patients</a></li>
+      <li><a href="rendezvous.html"><i class="fa-solid fa-calendar-check"></i> Rendez-vous</a></li>
+      <li><a href="consultations.html"><i class="fa-solid fa-stethoscope"></i> Consultations</a></li>
+      <li><a href="ordonnances.html"><i class="fa-solid fa-capsules"></i> Ordonnances</a></li>
+      <li><a href="facturation.html"><i class="fa-solid fa-file-invoice-dollar"></i> Facturation</a></li>
+      <li class="active"><a href="medecins.html"><i class="fa-solid fa-user-doctor"></i> Médecins</a></li>
+      <li><a href="utilisateurs.html"><i class="fa-solid fa-users-gear"></i> Utilisateurs</a></li>
+      <li><a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count"></span></a></li>
+      <li><a href="parametres.html"><i class="fa-solid fa-gear"></i> Paramètres</a></li>
+      <li><a href="profil.html"><i class="fa-solid fa-user"></i> Mon profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">AD</div>
+      <div class="user-details">
+        <span id="display-name">Admin</span>
+        <small>Administrateur</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── CONTENU ──────────────────────── -->
+  <main class="dash-content">
+
+    <header class="content-header">
+      <div>
+        <h1>Médecins</h1>
+        <p class="header-sub">Gérer les médecins du cabinet</p>
+      </div>
+      <button class="btn-primary" onclick="openModal('add')">
+        <i class="fa-solid fa-plus"></i> Ajouter un médecin
+      </button>
+    </header>
+
+    <div class="white-card">
+
+      <!-- BARRE DE RECHERCHE -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher un médecin..." oninput="filterTable()">
+        </div>
+        <span class="total-count">Total : <strong id="total-count">0</strong></span>
+      </div>
+
+      <!-- TABLE -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Médecin</th>
+            <th>Spécialité</th>
+            <th>Téléphone</th>
+            <th>Email</th>
+            <th>Consultations</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="fa-solid fa-user-doctor"></i>
+                <p>Aucun médecin trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </main>
+</div>
+
+<!-- ─── MODAL AJOUTER / MODIFIER ─────── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Ajouter un médecin</h3>
+      <button class="modal-close" onclick="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="medecin-id">
+      <div class="form-row">
+        <div class="form-col">
+          <label>Nom complet *</label>
+          <input type="text" id="m-nom" placeholder="Dr. Prénom Nom"
+          onkeydown="inputNomOnly(event)" maxlength="100">
+        </div>
+        <div class="form-col">
+          <label>Spécialité *</label>
+          <input type="text" id="m-specialite" placeholder="">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-col">
+          <label>Email *</label>
+          <input type="email" id="m-email" placeholder="medecin@email.com">
+        </div>
+        <div class="form-col">
+          <label>Téléphone</label>
+          <input type="tel" id="m-telephone" placeholder="06 00 00 00 00"
+          onkeydown="inputTelOnly(event)" maxlength="10">
+        </div>
+      </div>
+      <div class="form-row" id="password-row">
+        <div class="form-col full">
+          <label>Mot de passe *</label>
+          <input type="password" id="m-password" placeholder="Minimum 8 caractères">
+        </div>
+      </div>
+      <small class="form-error" id="modal-error"></small>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn-primary" id="modal-submit" onclick="submitModal()">
+        <i class="fa-solid fa-check"></i> Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMATION SUPPRESSION ── -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Confirmer la suppression</h3>
+      <button class="modal-close" onclick="closeConfirm()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#6b7c9a; font-size:14px;">
+        Voulez-vous vraiment supprimer le médecin <strong id="confirm-name"></strong> ?
+        Cette action est irréversible.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-danger" id="confirm-delete">
+        <i class="fa-solid fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
+<script>
+  checkAccess('admin');
+
+  // ─── AFFICHER INFOS USER ─────────────
+  const user = JSON.parse(localStorage.getItem('user'));
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  const token = localStorage.getItem('token');
+  let medecinsList = [];
+  let currentMode  = 'add';
+  let deleteId     = null;
+
+  // ─── CHARGER LES MÉDECINS ────────────
+  async function loadMedecins() {
+    try {
+      const res  = await fetch('/api/admin/medecins', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      medecinsList = data;
+      renderTable(data);
+      document.getElementById('total-count').textContent = data.length;
+    } catch (e) {
+      showToast('Erreur chargement médecins.', 'error');
+    }
+  }
+
+  // ─── AFFICHER LE TABLEAU ─────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="6">
+          <div class="empty-state">
+            <i class="fa-solid fa-user-doctor"></i>
+            <p>Aucun médecin trouvé</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(m => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar">${m.nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}</div>
+            <span>${m.nom}</span>
+          </div>
+        </td>
+        <td><span class="badge badge-blue">${m.specialite || '—'}</span></td>
+        <td>${m.telephone || '—'}</td>
+        <td>${m.email}</td>
+        <td><span class="badge badge-green">${m.total_consultations || 0}</span></td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn edit" onclick="openModal('edit', ${JSON.stringify(m).replace(/"/g, '&quot;')})">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="action-btn delete" onclick="confirmDelete(${m.id}, '${m.nom}')">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ─── FILTRER ─────────────────────────
+  function filterTable() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = medecinsList.filter(m =>
+      m.nom.toLowerCase().includes(q) ||
+      (m.specialite && m.specialite.toLowerCase().includes(q)) ||
+      m.email.toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+  }
+
+  // ─── OUVRIR MODAL ────────────────────
+  function openModal(mode, medecin = null) {
+    currentMode = mode;
+    document.getElementById('modal-error').textContent = '';
+
+    if (mode === 'add') {
+      document.getElementById('modal-title').textContent   = 'Ajouter un médecin';
+      document.getElementById('modal-submit').innerHTML    = '<i class="fa-solid fa-plus"></i> Ajouter';
+      document.getElementById('password-row').style.display = 'block';
+      document.getElementById('medecin-id').value  = '';
+      document.getElementById('m-nom').value        = '';
+      document.getElementById('m-specialite').value = '';
+      document.getElementById('m-email').value      = '';
+      document.getElementById('m-telephone').value  = '';
+      document.getElementById('m-password').value   = '';
+    } else {
+      document.getElementById('modal-title').textContent    = 'Modifier le médecin';
+      document.getElementById('modal-submit').innerHTML     = '<i class="fa-solid fa-check"></i> Enregistrer';
+      document.getElementById('password-row').style.display = 'none';
+      document.getElementById('medecin-id').value   = medecin.id;
+      document.getElementById('m-nom').value         = medecin.nom;
+      document.getElementById('m-specialite').value  = medecin.specialite || '';
+      document.getElementById('m-email').value       = medecin.email;
+      document.getElementById('m-telephone').value   = medecin.telephone || '';
+    }
+
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  // ─── SOUMETTRE MODAL ─────────────────
+ async function submitModal() {
+  const nom        = document.getElementById('m-nom').value.trim();
+  const specialite = document.getElementById('m-specialite').value.trim();
+  const email      = document.getElementById('m-email').value.trim();
+  const telephone  = document.getElementById('m-telephone').value.trim();
+  const password   = document.getElementById('m-password').value.trim();
+  const id         = document.getElementById('medecin-id').value;
+
+  // ─── VALIDATIONS ──────────────────────
+  if (!validerNom(nom)) {
+    document.getElementById('modal-error').textContent = 'Le nom doit contenir uniquement des lettres.';
+    return;
+  }
+  if (!specialite) {
+    document.getElementById('modal-error').textContent = 'La spécialité est obligatoire.';
+    return;
+  }
+  if (!validerEmail(email)) {
+    document.getElementById('modal-error').textContent = 'Email invalide.';
+    return;
+  }
+  if (telephone && !validerTelephone(telephone)) {
+    document.getElementById('modal-error').textContent = 'Le téléphone doit contenir exactement 10 chiffres.';
+    return;
+  }
+  if (currentMode === 'add' && !validerMotDePasse(password)) {
+    document.getElementById('modal-error').textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+    return;
+  }
+
+  // ─── ENVOI AU SERVEUR ─────────────────
+  try {
+    let res;
+    if (currentMode === 'add') {
+      res = await fetch('/api/auth/create-medecin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ nom, specialite, email, telephone, password })
+      });
+    } else {
+      res = await fetch(`/api/admin/medecins/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ nom, specialite, email, telephone })
+      });
+    }
+
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message);
+      closeModal();
+      loadMedecins();
+    } else {
+      document.getElementById('modal-error').textContent = data.message;
+    }
+  } catch (e) {
+    document.getElementById('modal-error').textContent = 'Erreur serveur.';
+  }
+}
+
+  // ─── SUPPRIMER ───────────────────────
+  function confirmDelete(id, nom) {
+    deleteId = id;
+    document.getElementById('confirm-name').textContent = nom;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-delete').onclick = async () => {
+      try {
+        const res = await fetch(`/api/admin/medecins/${deleteId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message);
+          closeConfirm();
+          loadMedecins();
+        }
+      } catch (e) {
+        showToast('Erreur suppression.', 'error');
+      }
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  // ─── INIT ─────────────────────────────
+  loadMedecins();
+</script>
+</body>
+</html>

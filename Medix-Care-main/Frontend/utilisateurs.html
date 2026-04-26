@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Utilisateurs — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+
+  <!-- ─── SIDEBAR ─────────────────────── -->
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Cabinet Médical</h2>
+        <small>Système de gestion</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-admin.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="patients.html"><i class="fa-solid fa-user-group"></i> Patients</a></li>
+      <li><a href="rendezvous.html"><i class="fa-solid fa-calendar-check"></i> Rendez-vous</a></li>
+      <li><a href="consultations.html"><i class="fa-solid fa-stethoscope"></i> Consultations</a></li>
+      <li><a href="ordonnances.html"><i class="fa-solid fa-capsules"></i> Ordonnances</a></li>
+      <li><a href="facturation.html"><i class="fa-solid fa-file-invoice-dollar"></i> Facturation</a></li>
+      <li><a href="medecins.html"><i class="fa-solid fa-user-doctor"></i> Médecins</a></li>
+      <li class="active"><a href="utilisateurs.html"><i class="fa-solid fa-users-gear"></i> Utilisateurs</a></li>
+      <li><a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge"></span></a></li>
+      <li><a href="parametres.html"><i class="fa-solid fa-gear"></i> Paramètres</a></li>
+      <li><a href="profil.html"><i class="fa-solid fa-user"></i> Mon profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">AD</div>
+      <div class="user-details">
+        <span id="display-name">Admin</span>
+        <small>Administrateur</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── CONTENU ──────────────────────── -->
+  <main class="dash-content">
+
+    <header class="content-header">
+      <div>
+        <h1>Utilisateurs</h1>
+        <p class="header-sub">Gérer tous les utilisateurs du système</p>
+      </div>
+    </header>
+
+    <!-- MINI STATS -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <i class="fa-solid fa-users"></i>
+        <div>
+          <strong id="stat-total">0</strong>
+          <span>Total utilisateurs</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-user-shield"></i>
+        <div>
+          <strong id="stat-admins">0</strong>
+          <span>Administrateurs</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-user-doctor"></i>
+        <div>
+          <strong id="stat-medecins">0</strong>
+          <span>Médecins</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-user-group"></i>
+        <div>
+          <strong id="stat-patients">0</strong>
+          <span>Patients</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="white-card">
+
+      <!-- TOOLBAR -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher un utilisateur..." oninput="filterTable()">
+        </div>
+        <div class="toolbar-filters">
+          <select id="filter-role" onchange="filterTable()" class="filter-select">
+            <option value="">Tous les rôles</option>
+            <option value="admin">Admin</option>
+            <option value="medecin">Médecin</option>
+            <option value="patient">Patient</option>
+          </select>
+        </div>
+        <span class="total-count">Total : <strong id="count-display">0</strong></span>
+      </div>
+
+      <!-- TABLE -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Utilisateur</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>Inscrit le</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <i class="fa-solid fa-users"></i>
+                <p>Aucun utilisateur</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </main>
+</div>
+
+<!-- ─── MODAL CONFIRMATION SUPPRESSION ── -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Confirmer la suppression</h3>
+      <button class="modal-close" onclick="closeConfirm()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#6b7c9a; font-size:14px;">
+        Voulez-vous vraiment supprimer l'utilisateur <strong id="confirm-name"></strong> ?
+        Cette action est irréversible.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-danger" id="confirm-delete">
+        <i class="fa-solid fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
+<script>
+  checkAccess('admin');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let usersList  = [];
+  let deleteId   = null;
+
+  // ─── CHARGER UTILISATEURS ────────────
+  async function loadUtilisateurs() {
+    try {
+      const res  = await fetch('/api/admin/utilisateurs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      usersList  = data;
+      renderTable(data);
+      updateStats(data);
+      document.getElementById('count-display').textContent = data.length;
+    } catch (e) {
+      showToast('Erreur chargement utilisateurs.', 'error');
+    }
+  }
+
+  // ─── STATS ───────────────────────────
+  function updateStats(data) {
+    document.getElementById('stat-total').textContent    = data.length;
+    document.getElementById('stat-admins').textContent   = data.filter(u => u.role === 'admin').length;
+    document.getElementById('stat-medecins').textContent = data.filter(u => u.role === 'medecin').length;
+    document.getElementById('stat-patients').textContent = data.filter(u => u.role === 'patient').length;
+  }
+
+  // ─── FILTRER ─────────────────────────
+  function filterTable() {
+    const q    = document.getElementById('search-input').value.toLowerCase();
+    const role = document.getElementById('filter-role').value;
+
+    const filtered = usersList.filter(u => {
+      const matchQ = u.nom.toLowerCase().includes(q) || u.email.toLowerCase().includes(q);
+      const matchR = !role || u.role === role;
+      return matchQ && matchR;
+    });
+
+    renderTable(filtered);
+    document.getElementById('count-display').textContent = filtered.length;
+  }
+
+  // ─── BADGE ROLE ──────────────────────
+  function badgeRole(role) {
+    const map = {
+      admin:   { class: 'badge-red',   icon: 'fa-user-shield', label: 'Admin'   },
+      medecin: { class: 'badge-blue',  icon: 'fa-user-doctor', label: 'Médecin' },
+      patient: { class: 'badge-green', icon: 'fa-user',        label: 'Patient' }
+    };
+    const r = map[role] || { class: 'badge-muted', icon: 'fa-user', label: role };
+    return `<span class="badge ${r.class}"><i class="fa-solid ${r.icon}"></i> ${r.label}</span>`;
+  }
+
+  // ─── AFFICHER TABLEAU ────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <i class="fa-solid fa-users"></i>
+            <p>Aucun utilisateur trouvé</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+
+    const roleColors = { admin: '#ff4d6d', medecin: '#1e6fff', patient: '#00c48c' };
+
+    tbody.innerHTML = data.map(u => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar" style="background:linear-gradient(135deg, ${roleColors[u.role] || '#6b7c9a'}, ${roleColors[u.role] || '#6b7c9a'}99)">
+              ${u.nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
+            </div>
+            <span>${u.nom}</span>
+          </div>
+        </td>
+        <td style="color:#6b7c9a">${u.email}</td>
+        <td>${badgeRole(u.role)}</td>
+        <td style="color:#6b7c9a">${new Date(u.created_at).toLocaleDateString('fr-FR')}</td>
+        <td>
+          <div class="action-btns">
+            ${u.role !== 'admin' ? `
+              <button class="action-btn delete" onclick="confirmDelete(${u.id}, '${u.nom}')" title="Supprimer">
+                <i class="fa-solid fa-trash"></i>
+              </button>
+            ` : '<span style="color:#6b7c9a;font-size:12px">Protégé</span>'}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ─── SUPPRIMER ───────────────────────
+  function confirmDelete(id, nom) {
+    deleteId = id;
+    document.getElementById('confirm-name').textContent = nom;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-delete').onclick = async () => {
+      try {
+        const res = await fetch(`/api/admin/utilisateurs/${deleteId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message);
+          closeConfirm();
+          loadUtilisateurs();
+        }
+      } catch (e) {
+        showToast('Erreur suppression.', 'error');
+      }
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  loadUtilisateurs();
+</script>
+</body>
+</html>

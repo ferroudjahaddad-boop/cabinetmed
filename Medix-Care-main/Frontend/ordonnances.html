@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ordonnances — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+
+  <!-- ─── SIDEBAR ─────────────────────── -->
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Système de gestion</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-admin.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="patients.html"><i class="fa-solid fa-user-group"></i> Patients</a></li>
+      <li><a href="rendezvous.html"><i class="fa-solid fa-calendar-check"></i> Rendez-vous</a></li>
+      <li><a href="consultations.html"><i class="fa-solid fa-stethoscope"></i> Consultations</a></li>
+      <li class="active"><a href="ordonnances.html"><i class="fa-solid fa-capsules"></i> Ordonnances</a></li>
+      <li><a href="facturation.html"><i class="fa-solid fa-file-invoice-dollar"></i> Facturation</a></li>
+      <li><a href="medecins.html"><i class="fa-solid fa-user-doctor"></i> Médecins</a></li>
+      <li><a href="utilisateurs.html"><i class="fa-solid fa-users-gear"></i> Utilisateurs</a></li>
+      <li><a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge"></span></a></li>
+      <li><a href="parametres.html"><i class="fa-solid fa-gear"></i> Paramètres</a></li>
+      <li><a href="profil.html"><i class="fa-solid fa-user"></i> Mon profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">AD</div>
+      <div class="user-details">
+        <span id="display-name">Admin</span>
+        <small>Administrateur</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── CONTENU ──────────────────────── -->
+  <main class="dash-content">
+
+    <header class="content-header">
+      <div>
+        <h1>Ordonnances</h1>
+        <p class="header-sub">Vue administrative des ordonnances</p>
+      </div>
+    </header>
+
+    <!-- MINI STATS -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <i class="fa-solid fa-capsules"></i>
+        <div>
+          <strong id="stat-total">0</strong>
+          <span>Total ordonnances</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-calendar-day"></i>
+        <div>
+          <strong id="stat-today">0</strong>
+          <span>Aujourd'hui</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-calendar-week"></i>
+        <div>
+          <strong id="stat-month">0</strong>
+          <span>Ce mois</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="white-card">
+
+      <!-- TOOLBAR -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher..." oninput="filterTable()">
+        </div>
+        <div class="toolbar-filters">
+          <select id="filter-mois" onchange="filterTable()" class="filter-select">
+            <option value="">Tous les mois</option>
+            <option value="1">Janvier</option>
+            <option value="2">Février</option>
+            <option value="3">Mars</option>
+            <option value="4">Avril</option>
+            <option value="5">Mai</option>
+            <option value="6">Juin</option>
+            <option value="7">Juillet</option>
+            <option value="8">Août</option>
+            <option value="9">Septembre</option>
+            <option value="10">Octobre</option>
+            <option value="11">Novembre</option>
+            <option value="12">Décembre</option>
+          </select>
+        </div>
+        <span class="total-count">Total : <strong id="count-display">0</strong></span>
+      </div>
+
+      <!-- TABLE -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Médecin</th>
+            <th>Médicaments</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr>
+            <td colspan="5">
+              <div class="empty-state">
+                <i class="fa-solid fa-capsules"></i>
+                <p>Aucune ordonnance</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </main>
+</div>
+
+<!-- ─── MODAL VOIR ORDONNANCE ─────────── -->
+<div class="modal-overlay" id="view-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3><i class="fa-solid fa-capsules"></i> Détails ordonnance</h3>
+      <button class="modal-close" onclick="closeView()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="ordonnance-detail">
+        <div class="od-row">
+          <div class="od-col">
+            <label>Patient</label>
+            <p id="od-patient">—</p>
+          </div>
+          <div class="od-col">
+            <label>Médecin</label>
+            <p id="od-medecin">—</p>
+          </div>
+        </div>
+        <div class="od-row">
+          <div class="od-col">
+            <label>Date</label>
+            <p id="od-date">—</p>
+          </div>
+        </div>
+        <div class="od-section">
+          <label><i class="fa-solid fa-pills"></i> Médicaments</label>
+          <div class="od-content" id="od-medicaments">—</div>
+        </div>
+        <div class="od-section">
+          <label><i class="fa-solid fa-notes-medical"></i> Instructions</label>
+          <div class="od-content" id="od-instructions">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeView()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMATION SUPPRESSION ── -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Confirmer la suppression</h3>
+      <button class="modal-close" onclick="closeConfirm()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#6b7c9a; font-size:14px;">
+        Voulez-vous vraiment supprimer cette ordonnance ? Cette action est irréversible.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-danger" id="confirm-delete">
+        <i class="fa-solid fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
+<script>
+  checkAccess('admin');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let ordonnancesList = [];
+  let deleteId = null;
+
+  // ─── CHARGER ORDONNANCES ─────────────
+  async function loadOrdonnances() {
+    try {
+      const res  = await fetch('/api/admin/ordonnances', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      ordonnancesList = data;
+      renderTable(data);
+      updateStats(data);
+      document.getElementById('count-display').textContent = data.length;
+    } catch (e) {
+      showToast('Erreur chargement ordonnances.', 'error');
+    }
+  }
+
+  // ─── STATS ───────────────────────────
+  function updateStats(data) {
+    const today = new Date().toISOString().split('T')[0];
+    const month = new Date().getMonth() + 1;
+    document.getElementById('stat-total').textContent = data.length;
+    document.getElementById('stat-today').textContent = data.filter(o => o.date && o.date.startsWith(today)).length;
+    document.getElementById('stat-month').textContent = data.filter(o => new Date(o.date).getMonth() + 1 === month).length;
+  }
+
+  // ─── FILTRER ─────────────────────────
+  function filterTable() {
+    const q    = document.getElementById('search-input').value.toLowerCase();
+    const mois = document.getElementById('filter-mois').value;
+
+    const filtered = ordonnancesList.filter(o => {
+      const matchQ    = o.patient_nom.toLowerCase().includes(q) || o.medecin_nom.toLowerCase().includes(q) || (o.medicaments && o.medicaments.toLowerCase().includes(q));
+      const matchMonth = !mois || (new Date(o.date).getMonth() + 1) === parseInt(mois);
+      return matchQ && matchMonth;
+    });
+
+    renderTable(filtered);
+    document.getElementById('count-display').textContent = filtered.length;
+  }
+
+  // ─── AFFICHER TABLEAU ────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `
+        <tr><td colspan="5">
+          <div class="empty-state">
+            <i class="fa-solid fa-capsules"></i>
+            <p>Aucune ordonnance trouvée</p>
+          </div>
+        </td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td>${new Date(o.date).toLocaleDateString('fr-FR')}</td>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar">${o.patient_nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}</div>
+            <span>${o.patient_nom}</span>
+          </div>
+        </td>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar" style="background:linear-gradient(135deg,#00c4b3,#0052d4)">
+              ${o.medecin_nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
+            </div>
+            <span>${o.medecin_nom}</span>
+          </div>
+        </td>
+        <td class="text-truncate">${o.medicaments || '—'}</td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" onclick="viewOrdonnance(${JSON.stringify(o).replace(/"/g, '&quot;')})" title="Voir">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+            <button class="action-btn delete" onclick="confirmDelete(${o.id})" title="Supprimer">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ─── VOIR ORDONNANCE ─────────────────
+  function viewOrdonnance(o) {
+    document.getElementById('od-patient').textContent      = o.patient_nom;
+    document.getElementById('od-medecin').textContent      = o.medecin_nom;
+    document.getElementById('od-date').textContent         = new Date(o.date).toLocaleDateString('fr-FR');
+    document.getElementById('od-medicaments').textContent  = o.medicaments  || 'Aucun médicament';
+    document.getElementById('od-instructions').textContent = o.instructions || 'Aucune instruction';
+    document.getElementById('view-overlay').classList.add('open');
+  }
+
+  function closeView() {
+    document.getElementById('view-overlay').classList.remove('open');
+  }
+
+  // ─── SUPPRIMER ───────────────────────
+  function confirmDelete(id) {
+    deleteId = id;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-delete').onclick = async () => {
+      try {
+        const res = await fetch(`/api/admin/ordonnances/${deleteId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message);
+          closeConfirm();
+          loadOrdonnances();
+        }
+      } catch (e) {
+        showToast('Erreur suppression.', 'error');
+      }
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  loadOrdonnances();
+</script>
+</body>
+</html>

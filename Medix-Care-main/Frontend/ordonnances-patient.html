@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Ordonnances — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Mon espace patient</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-patient.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="rendezvous-patient.html"><i class="fa-solid fa-calendar-check"></i> Mes Rendez-vous</a></li>
+      <li><a href="dossier-patient.html"><i class="fa-solid fa-folder-open"></i> Mon Dossier</a></li>
+      <li class="active"><a href="ordonnances-patient.html"><i class="fa-solid fa-capsules"></i> Mes Ordonnances</a></li>
+      <li><a href="factures-patient.html"><i class="fa-solid fa-file-invoice-dollar"></i> Mes Factures</a></li>
+      <li><a href="notifications-patient.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count">0</span></a></li>
+      <li><a href="profil-patient.html"><i class="fa-solid fa-user"></i> Mon Profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">PA</div>
+      <div class="user-details">
+        <span id="display-name">Patient</span>
+        <small>Patient</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="dash-content">
+    <header class="content-header">
+      <div>
+        <h1>Mes Ordonnances</h1>
+        <p class="header-sub">Toutes vos ordonnances médicales</p>
+      </div>
+    </header>
+
+    <!-- MINI STATS -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <i class="fa-solid fa-capsules"></i>
+        <div><strong id="stat-total">0</strong><span>Total ordonnances</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-calendar-day"></i>
+        <div><strong id="stat-mois">0</strong><span>Ce mois</span></div>
+      </div>
+    </div>
+
+    <div class="white-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher..." oninput="filterTable()">
+        </div>
+        <span class="total-count">Total : <strong id="count-display">0</strong></span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Médecin</th>
+            <th>Médicaments</th>
+            <th>Instructions</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-capsules"></i><p>Aucune ordonnance</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<!-- MODAL VOIR ORDONNANCE -->
+<div class="modal-overlay" id="view-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3><i class="fa-solid fa-capsules"></i> Détails ordonnance</h3>
+      <button class="modal-close" onclick="closeView()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="ordonnance-detail">
+        <div class="od-row">
+          <div class="od-col">
+            <label>Médecin</label>
+            <p id="od-medecin">—</p>
+          </div>
+          <div class="od-col">
+            <label>Date</label>
+            <p id="od-date">—</p>
+          </div>
+        </div>
+        <div class="od-section">
+          <label><i class="fa-solid fa-pills"></i> Médicaments</label>
+          <div class="od-content" id="od-medicaments">—</div>
+        </div>
+        <div class="od-section">
+          <label><i class="fa-solid fa-notes-medical"></i> Instructions</label>
+          <div class="od-content" id="od-instructions">—</div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeView()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/main.js"></script>
+<script>
+  checkAccess('patient');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let ordonnancesList = [];
+
+  async function loadOrdonnances() {
+    try {
+      const res  = await fetch('/api/patient/ordonnances', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      ordonnancesList = data;
+      renderTable(data);
+
+      const mois = new Date().getMonth() + 1;
+      document.getElementById('stat-total').textContent = data.length;
+      document.getElementById('stat-mois').textContent  = data.filter(o => new Date(o.date).getMonth() + 1 === mois).length;
+      document.getElementById('count-display').textContent = data.length;
+    } catch (e) {
+      showToast('Erreur chargement ordonnances.', 'error');
+    }
+  }
+
+  function filterTable() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = ordonnancesList.filter(o =>
+      (o.medicaments && o.medicaments.toLowerCase().includes(q)) ||
+      o.medecin_nom.toLowerCase().includes(q)
+    );
+    renderTable(filtered);
+    document.getElementById('count-display').textContent = filtered.length;
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-capsules"></i><p>Aucune ordonnance</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(o => `
+      <tr>
+        <td>${new Date(o.date).toLocaleDateString('fr-FR')}</td>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar" style="background:linear-gradient(135deg,#00c4b3,#0052d4)">
+              ${o.medecin_nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
+            </div>
+            <span>Dr. ${o.medecin_nom}</span>
+          </div>
+        </td>
+        <td style="max-width:180px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.medicaments || '—'}</td>
+        <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#6b7c9a">${o.instructions || '—'}</td>
+        <td>
+          <button class="action-btn view" onclick="viewOrdonnance(${JSON.stringify(o).replace(/"/g, '&quot;')})" title="Voir">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  function viewOrdonnance(o) {
+    document.getElementById('od-medecin').textContent      = 'Dr. ' + o.medecin_nom;
+    document.getElementById('od-date').textContent         = new Date(o.date).toLocaleDateString('fr-FR');
+    document.getElementById('od-medicaments').textContent  = o.medicaments  || 'Aucun médicament';
+    document.getElementById('od-instructions').textContent = o.instructions || 'Aucune instruction';
+    document.getElementById('view-overlay').classList.add('open');
+  }
+
+  function closeView() {
+    document.getElementById('view-overlay').classList.remove('open');
+  }
+
+  loadOrdonnances();
+</script>
+</body>
+</html>

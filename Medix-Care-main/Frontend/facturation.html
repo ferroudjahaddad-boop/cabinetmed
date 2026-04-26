@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facturation — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+
+  <!-- ─── SIDEBAR ─────────────────────── -->
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Cabinet Médical</h2>
+        <small>Système de gestion</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-admin.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="patients.html"><i class="fa-solid fa-user-group"></i> Patients</a></li>
+      <li><a href="rendezvous.html"><i class="fa-solid fa-calendar-check"></i> Rendez-vous</a></li>
+      <li><a href="consultations.html"><i class="fa-solid fa-stethoscope"></i> Consultations</a></li>
+      <li><a href="ordonnances.html"><i class="fa-solid fa-capsules"></i> Ordonnances</a></li>
+      <li class="active"><a href="facturation.html"><i class="fa-solid fa-file-invoice-dollar"></i> Facturation</a></li>
+      <li><a href="medecins.html"><i class="fa-solid fa-user-doctor"></i> Médecins</a></li>
+      <li><a href="utilisateurs.html"><i class="fa-solid fa-users-gear"></i> Utilisateurs</a></li>
+      <li><a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge"></span></a></li>
+      <li><a href="parametres.html"><i class="fa-solid fa-gear"></i> Paramètres</a></li>
+      <li><a href="profil.html"><i class="fa-solid fa-user"></i> Mon profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">AD</div>
+      <div class="user-details">
+        <span id="display-name">Admin</span>
+        <small>Administrateur</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── CONTENU ──────────────────────── -->
+  <main class="dash-content">
+
+    <header class="content-header">
+      <div>
+        <h1>Facturation</h1>
+        <p class="header-sub">Analyse des revenus et gestion des encaissements</p>
+      </div>
+      <div class="header-filters">
+        <select id="filter-annee" onchange="loadFacturation()" class="filter-select">
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026" selected>2026</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- STATS CARDS -->
+    <div class="fact-stats">
+      <div class="fact-card">
+        <div class="fact-icon blue">
+          <i class="fa-solid fa-money-bill-trend-up"></i>
+        </div>
+        <div class="fact-info">
+          <h3 id="stat-total">0 DA</h3>
+          <p>Revenu Total</p>
+        </div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-icon orange">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div class="fact-info">
+          <h3 id="stat-mois">0 DA</h3>
+          <p>Ce mois</p>
+        </div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-icon green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div class="fact-info">
+          <h3 id="stat-consultations">0</h3>
+          <p>Consultations payées</p>
+        </div>
+      </div>
+      <div class="fact-card">
+        <div class="fact-icon teal">
+          <i class="fa-solid fa-user-doctor"></i>
+        </div>
+        <div class="fact-info">
+          <h3 id="stat-moyenne">0 DA</h3>
+          <p>Moyenne par consultation</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRAPHIQUES -->
+    <div class="charts-row">
+
+      <!-- GRAPHIQUE BARRES -->
+      <div class="white-card chart-card">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-chart-bar"></i> Revenus par mois</h2>
+          <span id="chart-annee" class="badge badge-blue">2026</span>
+        </div>
+        <div class="chart-container">
+          <canvas id="chart-barres"></canvas>
+        </div>
+      </div>
+
+      <!-- GRAPHIQUE CAMEMBERT -->
+      <div class="white-card chart-card-sm">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-chart-pie"></i> Répartition</h2>
+          <span id="pie-mois" class="badge badge-blue"></span>
+        </div>
+        <div class="chart-container-sm">
+          <canvas id="chart-pie"></canvas>
+        </div>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+
+    </div>
+
+    <!-- TABLEAU DÉTAILLÉ PAR MÉDECIN -->
+    <div class="white-card" style="margin-bottom:24px">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-user-doctor"></i> Revenus par médecin</h2>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Médecin</th>
+            <th>Spécialité</th>
+            <th>Consultations</th>
+            <th>Revenus total</th>
+            <th>Revenus ce mois</th>
+            <th>Moyenne</th>
+          </tr>
+        </thead>
+        <tbody id="table-medecins">
+          <tr>
+            <td colspan="6">
+              <div class="empty-state">
+                <i class="fa-solid fa-user-doctor"></i>
+                <p>Aucune donnée</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TABLEAU DÉTAILLÉ PAR MOIS -->
+    <div class="white-card">
+      <div class="card-header">
+        <h2><i class="fa-solid fa-calendar"></i> Détail par mois</h2>
+      </div>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mois</th>
+            <th>Consultations</th>
+            <th>Revenus</th>
+            <th>Progression</th>
+          </tr>
+        </thead>
+        <tbody id="table-mois">
+          <tr>
+            <td colspan="4">
+              <div class="empty-state">
+                <i class="fa-solid fa-calendar"></i>
+                <p>Aucune donnée</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
+<script>
+  checkAccess('admin');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  const moisNoms = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+  let barChart = null;
+  let pieChart = null;
+
+  // ─── CHARGER FACTURATION ─────────────
+  async function loadFacturation() {
+    const annee = document.getElementById('filter-annee').value;
+    document.getElementById('chart-annee').textContent = annee;
+
+    try {
+      const [resF, resM] = await Promise.all([
+        fetch(`/api/admin/facturation?annee=${annee}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+        fetch(`/api/admin/facturation/medecins?annee=${annee}`, { headers: { 'Authorization': `Bearer ${token}` } })
+      ]);
+
+      const factData   = await resF.json();
+      const medecinData = await resM.json();
+
+      updateStats(factData, annee);
+      renderBarChart(factData);
+      renderPieChart(factData);
+      renderTableMois(factData);
+      renderTableMedecins(medecinData, annee);
+
+    } catch (e) {
+      showToast('Erreur chargement facturation.', 'error');
+    }
+  }
+
+  // ─── STATS ───────────────────────────
+  function updateStats(data, annee) {
+    const total = data.reduce((s, d) => s + parseFloat(d.total || 0), 0);
+    const totalConsult = data.reduce((s, d) => s + parseInt(d.nb_consultations || 0), 0);
+    const moisActuel = new Date().getMonth() + 1;
+    const moisData   = data.find(d => parseInt(d.mois) === moisActuel && parseInt(d.annee) === parseInt(annee));
+    const moisTotal  = moisData ? parseFloat(moisData.total) : 0;
+    const moyenne    = totalConsult > 0 ? (total / totalConsult).toFixed(0) : 0;
+
+    document.getElementById('stat-total').textContent         = total.toFixed(0) + ' DA';
+    document.getElementById('stat-mois').textContent          = moisTotal.toFixed(0) + ' DA';
+    document.getElementById('stat-consultations').textContent = totalConsult;
+    document.getElementById('stat-moyenne').textContent       = moyenne + ' DA';
+  }
+
+  // ─── GRAPHIQUE BARRES ────────────────
+  function renderBarChart(data) {
+    const labels  = moisNoms;
+    const revenus = Array(12).fill(0);
+
+    data.forEach(d => {
+      revenus[parseInt(d.mois) - 1] = parseFloat(d.total || 0);
+    });
+
+    if (barChart) barChart.destroy();
+
+    const ctx = document.getElementById('chart-barres').getContext('2d');
+    barChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Revenus (DA)',
+          data: revenus,
+          backgroundColor: revenus.map((v, i) => i === new Date().getMonth() ? '#1e6fff' : 'rgba(30,111,255,0.25)'),
+          borderColor: '#1e6fff',
+          borderRadius: 8,
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.parsed.y.toFixed(0) + ' DA'
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { callback: v => v + ' DA' }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+  }
+
+  // ─── GRAPHIQUE CAMEMBERT ─────────────
+  function renderPieChart(data) {
+    const moisActuel = new Date().getMonth() + 1;
+    const moisData   = data.find(d => parseInt(d.mois) === moisActuel);
+    const revenuMois = moisData ? parseFloat(moisData.total) : 0;
+    const total      = data.reduce((s, d) => s + parseFloat(d.total || 0), 0);
+    const reste      = Math.max(0, total - revenuMois);
+
+    document.getElementById('pie-mois').textContent = moisNoms[moisActuel - 1] + ' ' + new Date().getFullYear();
+
+    if (pieChart) pieChart.destroy();
+
+    const ctx = document.getElementById('chart-pie').getContext('2d');
+    pieChart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: ['Ce mois', 'Autres mois'],
+        datasets: [{
+          data: [revenuMois, reste],
+          backgroundColor: ['#1e6fff', '#f0f4f8'],
+          borderColor: ['#1e6fff', '#e0e8f0'],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.parsed.toFixed(0) + ' DA'
+            }
+          }
+        }
+      }
+    });
+
+    const pct = total > 0 ? ((revenuMois / total) * 100).toFixed(1) : 0;
+    document.getElementById('pie-legend').innerHTML = `
+      <div class="pie-item"><span class="pie-dot blue"></span> Ce mois : ${revenuMois.toFixed(0)} DA (${pct}%)</div>
+      <div class="pie-item"><span class="pie-dot gray"></span> Autres : ${reste.toFixed(0)} DA</div>
+    `;
+  }
+
+  // ─── TABLEAU MOIS ────────────────────
+  function renderTableMois(data) {
+    const tbody = document.getElementById('table-mois');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="4"><div class="empty-state"><i class="fa-solid fa-calendar"></i><p>Aucune donnée</p></div></td></tr>`;
+      return;
+    }
+
+    const maxRevenu = Math.max(...data.map(d => parseFloat(d.total || 0)));
+
+    tbody.innerHTML = data.map(d => {
+      const pct = maxRevenu > 0 ? ((parseFloat(d.total) / maxRevenu) * 100).toFixed(0) : 0;
+      return `
+        <tr>
+          <td><strong>${moisNoms[parseInt(d.mois) - 1]} ${d.annee}</strong></td>
+          <td><span class="badge badge-blue">${d.nb_consultations}</span></td>
+          <td><strong>${parseFloat(d.total).toFixed(0)} DA</strong></td>
+          <td>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width:${pct}%"></div>
+              <span>${pct}%</span>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // ─── TABLEAU MÉDECINS ────────────────
+  function renderTableMedecins(data, annee) {
+    const tbody = document.getElementById('table-medecins');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-user-doctor"></i><p>Aucune donnée</p></div></td></tr>`;
+      return;
+    }
+
+    const moisActuel = new Date().getMonth() + 1;
+
+    tbody.innerHTML = data.map(m => {
+      const moyenne = m.total_consultations > 0 ? (parseFloat(m.total_revenus) / m.total_consultations).toFixed(0) : 0;
+      return `
+        <tr>
+          <td>
+            <div class="user-cell">
+              <div class="cell-avatar">${m.nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}</div>
+              <span>${m.nom}</span>
+            </div>
+          </td>
+          <td><span class="badge badge-blue">${m.specialite || '—'}</span></td>
+          <td><span class="badge badge-green">${m.total_consultations || 0}</span></td>
+          <td><strong>${parseFloat(m.total_revenus || 0).toFixed(0)} DA</strong></td>
+          <td>${parseFloat(m.revenus_mois || 0).toFixed(0)} DA</td>
+          <td>${moyenne} DA</td>
+        </tr>`;
+    }).join('');
+  }
+
+  loadFacturation();
+</script>
+</body>
+</html>

@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Patients — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+
+  <!-- ─── SIDEBAR ─────────────────────── -->
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Système de gestion</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-admin.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li class="active"><a href="patients.html"><i class="fa-solid fa-user-group"></i> Patients</a></li>
+      <li><a href="rendezvous.html"><i class="fa-solid fa-calendar-check"></i> Rendez-vous</a></li>
+      <li><a href="consultations.html"><i class="fa-solid fa-stethoscope"></i> Consultations</a></li>
+      <li><a href="ordonnances.html"><i class="fa-solid fa-capsules"></i> Ordonnances</a></li>
+      <li><a href="facturation.html"><i class="fa-solid fa-file-invoice-dollar"></i> Facturation</a></li>
+      <li><a href="medecins.html"><i class="fa-solid fa-user-doctor"></i> Médecins</a></li>
+      <li><a href="utilisateurs.html"><i class="fa-solid fa-users-gear"></i> Utilisateurs</a></li>
+      <li><a href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count"></span></a></li>
+      <li><a href="parametres.html"><i class="fa-solid fa-gear"></i> Paramètres</a></li>
+      <li><a href="profil.html"><i class="fa-solid fa-user"></i> Mon profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">AD</div>
+      <div class="user-details">
+        <span id="display-name">Admin</span>
+        <small>Administrateur</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── CONTENU ──────────────────────── -->
+  <main class="dash-content">
+
+    <header class="content-header">
+      <div>
+        <h1>Patients</h1>
+        <p class="header-sub">Gérer les patients du cabinet</p>
+      </div>
+      <button class="btn-primary" onclick="openModal('add')">
+        <i class="fa-solid fa-plus"></i> Ajouter un patient
+      </button>
+    </header>
+
+    <!-- STATS RAPIDES -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <i class="fa-solid fa-user-group"></i>
+        <div>
+          <strong id="total-patients">0</strong>
+          <span>Total patients</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-mars"></i>
+        <div>
+          <strong id="total-hommes">0</strong>
+          <span>Hommes</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-venus"></i>
+        <div>
+          <strong id="total-femmes">0</strong>
+          <span>Femmes</span>
+        </div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-calendar-day"></i>
+        <div>
+          <strong id="total-today">0</strong>
+          <span>Inscrits aujourd'hui</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="white-card">
+
+      <!-- TOOLBAR -->
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher un patient..." oninput="filterTable()">
+        </div>
+        <span class="total-count">Total : <strong id="count-display">0</strong></span>
+      </div>
+
+      <!-- TABLE -->
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Patient</th>
+            <th>Email</th>
+            <th>Téléphone</th>
+            <th>Sexe</th>
+            <th>Date naissance</th>
+            <th>Consultations</th>
+            <th>Dernière visite</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">
+                <i class="fa-solid fa-user-group"></i>
+                <p>Aucun patient trouvé</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+    </div>
+  </main>
+</div>
+
+<!-- ─── MODAL AJOUTER / MODIFIER ─────── -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modal-title">Ajouter un patient</h3>
+      <button class="modal-close" onclick="closeModal()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="patient-id">
+      <div class="form-row">
+        <div class="form-col">
+          <label>Nom complet *</label>
+          <input type="text" id="p-nom" placeholder="Prénom Nom"
+             onkeydown="inputNomOnly(event)" maxlength="100">
+        </div>
+        <div class="form-col">
+          <label>Email *</label>
+          <input type="email" id="p-email" placeholder="patient@email.com">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-col">
+          <label>Téléphone</label>
+          <input type="tel" id="p-telephone" placeholder="06 00 00 00 00"
+           onkeydown="inputTelOnly(event)" maxlength="10">
+        </div>
+        <div class="form-col">
+          <label>Sexe</label>
+          <select id="p-sexe">
+            <option value="">-- Choisir --</option>
+            <option value="homme">Homme</option>
+            <option value="femme">Femme</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-col">
+          <label>Date de naissance</label>
+          <input type="date" id="p-dob">
+        </div>
+        <div class="form-col">
+          <label>Adresse</label>
+          <input type="text" id="p-adresse" placeholder="Adresse complète">
+        </div>
+      </div>
+      <div class="form-row" id="password-row">
+        <div class="form-col full">
+          <label>Mot de passe *</label>
+          <input type="password" id="p-password" placeholder="Minimum 8 caractères">
+        </div>
+      </div>
+      <small class="form-error" id="modal-error"></small>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeModal()">Annuler</button>
+      <button class="btn-primary" id="modal-submit" onclick="submitModal()">
+        <i class="fa-solid fa-check"></i> Enregistrer
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL DOSSIER MÉDICAL ─────────── -->
+<div class="modal-overlay" id="dossier-overlay">
+  <div class="modal modal-lg">
+    <div class="modal-head">
+      <h3><i class="fa-solid fa-folder-open"></i> Dossier médical — <span id="dossier-nom"></span></h3>
+      <button class="modal-close" onclick="closeDossier()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+
+      <!-- TABS DOSSIER -->
+      <div class="dossier-tabs">
+        <button class="dtab active" onclick="switchDTab('consultations', this)">
+          <i class="fa-solid fa-stethoscope"></i> Consultations
+        </button>
+        <button class="dtab" onclick="switchDTab('ordonnances', this)">
+          <i class="fa-solid fa-capsules"></i> Ordonnances
+        </button>
+        <button class="dtab" onclick="switchDTab('historique', this)">
+          <i class="fa-solid fa-clock-rotate-left"></i> Historique
+        </button>
+      </div>
+
+      <!-- CONSULTATIONS -->
+      <div id="dtab-consultations">
+        <table class="data-table" style="margin-top:16px">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Médecin</th>
+              <th>Symptômes</th>
+              <th>Diagnostic</th>
+              <th>Prix</th>
+            </tr>
+          </thead>
+          <tbody id="dossier-consultations">
+            <tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-stethoscope"></i><p>Aucune consultation</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ORDONNANCES -->
+      <div id="dtab-ordonnances" style="display:none">
+        <table class="data-table" style="margin-top:16px">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Médicaments</th>
+              <th>Instructions</th>
+            </tr>
+          </thead>
+          <tbody id="dossier-ordonnances">
+            <tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-capsules"></i><p>Aucune ordonnance</p></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- HISTORIQUE -->
+      <div id="dtab-historique" style="display:none">
+        <ul class="historique-list" id="dossier-historique">
+          <li class="empty-item">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+            <p>Aucun historique</p>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeDossier()">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── MODAL CONFIRMATION SUPPRESSION ── -->
+<div class="modal-overlay" id="confirm-overlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h3>Confirmer la suppression</h3>
+      <button class="modal-close" onclick="closeConfirm()">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color:#6b7c9a; font-size:14px;">
+        Voulez-vous vraiment supprimer le patient <strong id="confirm-name"></strong> ?
+        Cette action supprimera aussi toutes ses consultations et ordonnances.
+      </p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-outline" onclick="closeConfirm()">Annuler</button>
+      <button class="btn-danger" id="confirm-delete">
+        <i class="fa-solid fa-trash"></i> Supprimer
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
+<script>
+  checkAccess('admin');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let patientsList = [];
+  let currentMode  = 'add';
+  let deleteId     = null;
+
+  // ─── CHARGER LES PATIENTS ────────────
+  async function loadPatients() {
+    try {
+      const res  = await fetch('/api/admin/patients', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      patientsList = data;
+      renderTable(data);
+
+      // stats rapides
+      document.getElementById('total-patients').textContent = data.length;
+      document.getElementById('total-hommes').textContent   = data.filter(p => p.sexe === 'homme').length;
+      document.getElementById('total-femmes').textContent   = data.filter(p => p.sexe === 'femme').length;
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('total-today').textContent    = data.filter(p => p.created_at && p.created_at.startsWith(today)).length;
+      document.getElementById('count-display').textContent  = data.length;
+
+    } catch (e) {
+      showToast('Erreur chargement patients.', 'error');
+    }
+  }
+
+  // ─── AFFICHER TABLEAU ────────────────
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8"><div class="empty-state"><i class="fa-solid fa-user-group"></i><p>Aucun patient trouvé</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map(p => `
+      <tr>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar ${p.sexe === 'femme' ? 'avatar-pink' : ''}">${p.nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}</div>
+            <span>${p.nom}</span>
+          </div>
+        </td>
+        <td>${p.email}</td>
+        <td>${p.telephone || '—'}</td>
+        <td>
+          <span class="badge ${p.sexe === 'homme' ? 'badge-blue' : 'badge-pink'}">
+            ${p.sexe ? p.sexe.charAt(0).toUpperCase() + p.sexe.slice(1) : '—'}
+          </span>
+        </td>
+        <td>${p.date_naissance ? new Date(p.date_naissance).toLocaleDateString('fr-FR') : '—'}</td>
+        <td><span class="badge badge-green">${p.nb_consultations || 0}</span></td>
+        <td>${p.derniere_visite ? new Date(p.derniere_visite).toLocaleDateString('fr-FR') : '—'}</td>
+        <td>
+          <div class="action-btns">
+            <button class="action-btn view" onclick="openDossier(${p.id}, '${p.nom}')" title="Dossier médical">
+              <i class="fa-solid fa-folder-open"></i>
+            </button>
+            <button class="action-btn edit" onclick="openModal('edit', ${JSON.stringify(p).replace(/"/g, '&quot;')})" title="Modifier">
+              <i class="fa-solid fa-pen"></i>
+            </button>
+            <button class="action-btn delete" onclick="confirmDelete(${p.id}, '${p.nom}')" title="Supprimer">
+              <i class="fa-solid fa-trash"></i>
+            </button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  }
+
+  // ─── FILTRER ─────────────────────────
+  function filterTable() {
+    const q = document.getElementById('search-input').value.toLowerCase();
+    const filtered = patientsList.filter(p =>
+      p.nom.toLowerCase().includes(q) ||
+      p.email.toLowerCase().includes(q) ||
+      (p.telephone && p.telephone.includes(q))
+    );
+    renderTable(filtered);
+    document.getElementById('count-display').textContent = filtered.length;
+  }
+
+  // ─── MODAL AJOUTER/MODIFIER ──────────
+  function openModal(mode, patient = null) {
+    currentMode = mode;
+    document.getElementById('modal-error').textContent = '';
+
+    if (mode === 'add') {
+      document.getElementById('modal-title').textContent    = 'Ajouter un patient';
+      document.getElementById('modal-submit').innerHTML     = '<i class="fa-solid fa-plus"></i> Ajouter';
+      document.getElementById('password-row').style.display = 'block';
+      document.getElementById('patient-id').value  = '';
+      document.getElementById('p-nom').value        = '';
+      document.getElementById('p-email').value      = '';
+      document.getElementById('p-telephone').value  = '';
+      document.getElementById('p-sexe').value       = '';
+      document.getElementById('p-dob').value        = '';
+      document.getElementById('p-adresse').value    = '';
+      document.getElementById('p-password').value   = '';
+    } else {
+      document.getElementById('modal-title').textContent    = 'Modifier le patient';
+      document.getElementById('modal-submit').innerHTML     = '<i class="fa-solid fa-check"></i> Enregistrer';
+      document.getElementById('password-row').style.display = 'none';
+      document.getElementById('patient-id').value  = patient.id;
+      document.getElementById('p-nom').value        = patient.nom;
+      document.getElementById('p-email').value      = patient.email;
+      document.getElementById('p-telephone').value  = patient.telephone || '';
+      document.getElementById('p-sexe').value       = patient.sexe || '';
+      document.getElementById('p-dob').value        = patient.date_naissance ? patient.date_naissance.split('T')[0] : '';
+      document.getElementById('p-adresse').value    = patient.adresse || '';
+    }
+    document.getElementById('modal-overlay').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('modal-overlay').classList.remove('open');
+  }
+
+  // ─── SOUMETTRE ───────────────────────
+    async function submitModal() {
+  const nom            = document.getElementById('p-nom').value.trim();
+  const email          = document.getElementById('p-email').value.trim();
+  const telephone      = document.getElementById('p-telephone').value.trim();
+  const sexe           = document.getElementById('p-sexe').value;
+  const date_naissance = document.getElementById('p-dob').value;
+  const adresse        = document.getElementById('p-adresse').value.trim();
+  const password       = document.getElementById('p-password').value.trim();
+  const id             = document.getElementById('patient-id').value;
+
+  // ─── VALIDATIONS ──────────────────────
+  if (!validerNom(nom)) {
+    document.getElementById('modal-error').textContent = 'Le nom doit contenir uniquement des lettres.';
+    return;
+  }
+  if (!validerEmail(email)) {
+    document.getElementById('modal-error').textContent = 'Email invalide.';
+    return;
+  }
+  if (telephone && !validerTelephone(telephone)) {
+    document.getElementById('modal-error').textContent = 'Le téléphone doit contenir exactement 10 chiffres.';
+    return;
+  }
+  if (currentMode === 'add' && !validerMotDePasse(password)) {
+    document.getElementById('modal-error').textContent = 'Le mot de passe doit contenir au moins 8 caractères.';
+    return;
+  }
+
+  // ─── ENVOI AU SERVEUR ─────────────────
+  try {
+    let res;
+    if (currentMode === 'add') {
+      res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ nom, email, password, telephone, sexe, date_naissance, adresse })
+      });
+    } else {
+      res = await fetch(`/api/admin/patients/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ nom, email, telephone, sexe, date_naissance, adresse })
+      });
+    }
+
+    const data = await res.json();
+    if (res.ok) {
+      showToast(data.message);
+      closeModal();
+      loadPatients();
+    } else {
+      document.getElementById('modal-error').textContent = data.message;
+    }
+  } catch (e) {
+    document.getElementById('modal-error').textContent = 'Erreur serveur.';
+  }
+}
+
+  // ─── DOSSIER MÉDICAL ─────────────────
+  async function openDossier(id, nom) {
+    document.getElementById('dossier-nom').textContent = nom;
+    document.getElementById('dossier-overlay').classList.add('open');
+    switchDTab('consultations', document.querySelector('.dtab'));
+
+    try {
+      const res  = await fetch(`/api/admin/patients/${id}/dossier`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+
+      // Consultations
+      const tc = document.getElementById('dossier-consultations');
+      tc.innerHTML = data.consultations.length === 0
+        ? `<tr><td colspan="5"><div class="empty-state"><i class="fa-solid fa-stethoscope"></i><p>Aucune consultation</p></div></td></tr>`
+        : data.consultations.map(c => `
+          <tr>
+            <td>${new Date(c.date).toLocaleDateString('fr-FR')}</td>
+            <td>${c.medecin_nom}</td>
+            <td>${c.symptomes || '—'}</td>
+            <td>${c.diagnostic || '—'}</td>
+            <td><span class="badge badge-green">${c.prix || 0} DA</span></td>
+          </tr>`).join('');
+
+      // Ordonnances
+      const to = document.getElementById('dossier-ordonnances');
+      to.innerHTML = data.ordonnances.length === 0
+        ? `<tr><td colspan="3"><div class="empty-state"><i class="fa-solid fa-capsules"></i><p>Aucune ordonnance</p></div></td></tr>`
+        : data.ordonnances.map(o => `
+          <tr>
+            <td>${new Date(o.date).toLocaleDateString('fr-FR')}</td>
+            <td>${o.medicaments || '—'}</td>
+            <td>${o.instructions || '—'}</td>
+          </tr>`).join('');
+
+      // Historique
+      const th = document.getElementById('dossier-historique');
+      const all = [...data.consultations.map(c => ({ date: c.date, type: 'consultation', detail: `Consultation — ${c.diagnostic || 'Sans diagnostic'}` })),
+                   ...data.ordonnances.map(o => ({ date: o.date, type: 'ordonnance', detail: `Ordonnance — ${o.medicaments || ''}` })),
+                   ...data.rendezvous.map(r => ({ date: r.date, type: 'rdv', detail: `Rendez-vous — ${r.statut}` }))
+                  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      th.innerHTML = all.length === 0
+        ? `<li class="empty-item"><i class="fa-solid fa-clock-rotate-left"></i><p>Aucun historique</p></li>`
+        : all.map(h => `
+          <li class="historique-item">
+            <div class="h-icon ${h.type}">
+              <i class="fa-solid ${h.type === 'consultation' ? 'fa-stethoscope' : h.type === 'ordonnance' ? 'fa-capsules' : 'fa-calendar'}"></i>
+            </div>
+            <div class="h-detail">
+              <p>${h.detail}</p>
+              <small>${new Date(h.date).toLocaleDateString('fr-FR')}</small>
+            </div>
+          </li>`).join('');
+
+    } catch (e) {
+      showToast('Erreur chargement dossier.', 'error');
+    }
+  }
+
+  function closeDossier() {
+    document.getElementById('dossier-overlay').classList.remove('open');
+  }
+
+  function switchDTab(tab, el) {
+    document.querySelectorAll('.dtab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('dtab-consultations').style.display = tab === 'consultations' ? 'block' : 'none';
+    document.getElementById('dtab-ordonnances').style.display   = tab === 'ordonnances'   ? 'block' : 'none';
+    document.getElementById('dtab-historique').style.display    = tab === 'historique'    ? 'block' : 'none';
+  }
+
+  // ─── SUPPRIMER ───────────────────────
+  function confirmDelete(id, nom) {
+    deleteId = id;
+    document.getElementById('confirm-name').textContent = nom;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-delete').onclick = async () => {
+      try {
+        const res = await fetch(`/api/admin/patients/${deleteId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showToast(data.message);
+          closeConfirm();
+          loadPatients();
+        }
+      } catch (e) {
+        showToast('Erreur suppression.', 'error');
+      }
+    };
+  }
+
+  function closeConfirm() {
+    document.getElementById('confirm-overlay').classList.remove('open');
+  }
+
+  loadPatients();
+</script>
+</body>
+</html>

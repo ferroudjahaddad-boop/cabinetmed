@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mes Factures — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Mon espace patient</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-patient.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="rendezvous-patient.html"><i class="fa-solid fa-calendar-check"></i> Mes Rendez-vous</a></li>
+      <li><a href="dossier-patient.html"><i class="fa-solid fa-folder-open"></i> Mon Dossier</a></li>
+      <li><a href="ordonnances-patient.html"><i class="fa-solid fa-capsules"></i> Mes Ordonnances</a></li>
+      <li class="active"><a href="factures-patient.html"><i class="fa-solid fa-file-invoice-dollar"></i> Mes Factures</a></li>
+      <li><a href="notifications-patient.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count">0</span></a></li>
+      <li><a href="profil-patient.html"><i class="fa-solid fa-user"></i> Mon Profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">PA</div>
+      <div class="user-details">
+        <span id="display-name">Patient</span>
+        <small>Patient</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="dash-content">
+    <header class="content-header">
+      <div>
+        <h1>Mes Factures</h1>
+        <p class="header-sub">Historique de vos paiements</p>
+      </div>
+    </header>
+
+    <!-- MINI STATS -->
+    <div class="mini-stats">
+      <div class="mini-stat">
+        <i class="fa-solid fa-money-bill-wave"></i>
+        <div><strong id="stat-total">0 DA</strong><span>Total payé</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-calendar-week"></i>
+        <div><strong id="stat-mois">0 DA</strong><span>Ce mois</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-file-invoice"></i>
+        <div><strong id="stat-nb">0</strong><span>Nombre de factures</span></div>
+      </div>
+      <div class="mini-stat">
+        <i class="fa-solid fa-chart-line"></i>
+        <div><strong id="stat-moyenne">0 DA</strong><span>Moyenne par visite</span></div>
+      </div>
+    </div>
+
+    <div class="white-card">
+      <div class="table-toolbar">
+        <div class="search-box">
+          <i class="fa-solid fa-search"></i>
+          <input type="text" id="search-input" placeholder="Rechercher..." oninput="filterTable()">
+        </div>
+        <select id="filter-mois" onchange="filterTable()" class="filter-select">
+          <option value="">Tous les mois</option>
+          <option value="1">Janvier</option>
+          <option value="2">Février</option>
+          <option value="3">Mars</option>
+          <option value="4">Avril</option>
+          <option value="5">Mai</option>
+          <option value="6">Juin</option>
+          <option value="7">Juillet</option>
+          <option value="8">Août</option>
+          <option value="9">Septembre</option>
+          <option value="10">Octobre</option>
+          <option value="11">Novembre</option>
+          <option value="12">Décembre</option>
+        </select>
+        <span class="total-count">Total : <strong id="count-display">0</strong></span>
+      </div>
+
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Date</th>
+            <th>Médecin</th>
+            <th>Spécialité</th>
+            <th>Montant</th>
+            <th>Statut</th>
+          </tr>
+        </thead>
+        <tbody id="table-body">
+          <tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-file-invoice-dollar"></i><p>Aucune facture</p></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/main.js"></script>
+<script>
+  checkAccess('patient');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let facturesList = [];
+
+  async function loadFactures() {
+    try {
+      const res  = await fetch('/api/patient/factures', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      facturesList = data;
+      renderTable(data);
+      updateStats(data);
+      document.getElementById('count-display').textContent = data.length;
+    } catch (e) {
+      showToast('Erreur chargement factures.', 'error');
+    }
+  }
+
+  function updateStats(data) {
+    const total   = data.reduce((s, f) => s + parseFloat(f.prix || 0), 0);
+    const mois    = new Date().getMonth() + 1;
+    const moisTotal = data.filter(f => new Date(f.date).getMonth() + 1 === mois).reduce((s, f) => s + parseFloat(f.prix || 0), 0);
+    const moyenne = data.length > 0 ? (total / data.length).toFixed(0) : 0;
+
+    document.getElementById('stat-total').textContent   = total.toFixed(0)     + ' DA';
+    document.getElementById('stat-mois').textContent    = moisTotal.toFixed(0) + ' DA';
+    document.getElementById('stat-nb').textContent      = data.length;
+    document.getElementById('stat-moyenne').textContent = moyenne              + ' DA';
+  }
+
+  function filterTable() {
+    const q    = document.getElementById('search-input').value.toLowerCase();
+    const mois = document.getElementById('filter-mois').value;
+    const filtered = facturesList.filter(f => {
+      const matchQ = f.medecin_nom.toLowerCase().includes(q);
+      const matchM = !mois || (new Date(f.date).getMonth() + 1) === parseInt(mois);
+      return matchQ && matchM;
+    });
+    renderTable(filtered);
+    document.getElementById('count-display').textContent = filtered.length;
+  }
+
+  function renderTable(data) {
+    const tbody = document.getElementById('table-body');
+    if (data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><i class="fa-solid fa-file-invoice-dollar"></i><p>Aucune facture</p></div></td></tr>`;
+      return;
+    }
+    tbody.innerHTML = data.map((f, i) => `
+      <tr>
+        <td style="color:#6b7c9a;font-size:12px">#${String(i+1).padStart(3,'0')}</td>
+        <td>${new Date(f.date).toLocaleDateString('fr-FR')}</td>
+        <td>
+          <div class="user-cell">
+            <div class="cell-avatar" style="background:linear-gradient(135deg,#00c4b3,#0052d4)">
+              ${f.medecin_nom.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2)}
+            </div>
+            <span>Dr. ${f.medecin_nom}</span>
+          </div>
+        </td>
+        <td><span class="badge badge-blue">${f.specialite || '—'}</span></td>
+        <td><strong style="color:#1e6fff;font-size:15px">${parseFloat(f.prix).toFixed(0)} DA</strong></td>
+        <td><span class="badge badge-green"><i class="fa-solid fa-circle-check"></i> Payé</span></td>
+      </tr>
+    `).join('');
+  }
+
+  loadFactures();
+</script>
+</body>
+</html>

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Notifications — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="dash-body">
+<div class="dash-wrapper">
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix care</h2>
+        <small>Mon espace patient</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li><a href="dashboard-patient.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="rendezvous-patient.html"><i class="fa-solid fa-calendar-check"></i> Mes Rendez-vous</a></li>
+      <li><a href="dossier-patient.html"><i class="fa-solid fa-folder-open"></i> Mon Dossier</a></li>
+      <li><a href="ordonnances-patient.html"><i class="fa-solid fa-capsules"></i> Mes Ordonnances</a></li>
+      <li><a href="factures-patient.html"><i class="fa-solid fa-file-invoice-dollar"></i> Mes Factures</a></li>
+      <li class="active"><a href="notifications-patient.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count">0</span></a></li>
+      <li><a href="profil-patient.html"><i class="fa-solid fa-user"></i> Mon Profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">PA</div>
+      <div class="user-details">
+        <span id="display-name">Patient</span>
+        <small>Patient</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <main class="dash-content">
+    <header class="content-header">
+      <div>
+        <h1>Notifications</h1>
+        <p class="header-sub">Vos messages et alertes</p>
+      </div>
+      <button class="btn-outline" onclick="markAllRead()">
+        <i class="fa-solid fa-check-double"></i> Tout marquer lu
+      </button>
+    </header>
+
+    <!-- TABS -->
+    <div class="notif-tabs">
+      <button class="ntab active" onclick="filterNotifs('all', this)">
+        Toutes <span class="ntab-count" id="count-all">0</span>
+      </button>
+      <button class="ntab" onclick="filterNotifs('unread', this)">
+        Non lues <span class="ntab-count" id="count-unread">0</span>
+      </button>
+      <button class="ntab" onclick="filterNotifs('read', this)">
+        Lues <span class="ntab-count" id="count-read">0</span>
+      </button>
+    </div>
+
+    <!-- LISTE -->
+    <div class="notif-list" id="notif-list">
+      <div class="empty-state" style="padding:64px">
+        <i class="fa-solid fa-bell-slash"></i>
+        <p>Aucune notification</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+<script src="js/main.js"></script>
+<script>
+  checkAccess('patient');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  let notifsList    = [];
+  let currentFilter = 'all';
+
+  async function loadNotifications() {
+    try {
+      const res  = await fetch('/api/patient/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      notifsList = data;
+      updateCounts(data);
+      renderNotifs(data);
+    } catch (e) {
+      showToast('Erreur chargement notifications.', 'error');
+    }
+  }
+
+  function updateCounts(data) {
+    const unread = data.filter(n => !n.lu).length;
+    const read   = data.filter(n => n.lu).length;
+    document.getElementById('count-all').textContent    = data.length;
+    document.getElementById('count-unread').textContent = unread;
+    document.getElementById('count-read').textContent   = read;
+    const badge = document.getElementById('notif-count');
+    if (badge) {
+      badge.textContent   = unread;
+      badge.style.display = unread > 0 ? 'inline' : 'none';
+    }
+  }
+
+  function filterNotifs(filter, el) {
+    currentFilter = filter;
+    document.querySelectorAll('.ntab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    let filtered = notifsList;
+    if (filter === 'unread') filtered = notifsList.filter(n => !n.lu);
+    if (filter === 'read')   filtered = notifsList.filter(n => n.lu);
+    renderNotifs(filtered);
+  }
+
+  function renderNotifs(data) {
+    const list = document.getElementById('notif-list');
+    if (data.length === 0) {
+      list.innerHTML = `
+        <div class="empty-state" style="padding:64px">
+          <i class="fa-solid fa-bell-slash"></i>
+          <p>Aucune notification</p>
+        </div>`;
+      return;
+    }
+    list.innerHTML = data.map(n => `
+      <div class="notif-item ${n.lu ? 'read' : 'unread'}">
+        <div class="notif-icon ${n.lu ? 'gray' : 'blue'}">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div class="notif-content">
+          <p class="notif-message">${n.message}</p>
+          <div class="notif-meta">
+            <span><i class="fa-solid fa-clock"></i> ${timeAgo(n.created_at)}</span>
+            ${!n.lu ? '<span class="notif-new">Nouveau</span>' : ''}
+          </div>
+        </div>
+        <div class="notif-actions">
+          ${!n.lu ? `
+            <button class="action-btn" onclick="markRead(${n.id})" title="Marquer lu">
+              <i class="fa-solid fa-check"></i>
+            </button>
+          ` : ''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function timeAgo(date) {
+    const diff = Math.floor((new Date() - new Date(date)) / 1000);
+    if (diff < 60)    return 'À l\'instant';
+    if (diff < 3600)  return Math.floor(diff/60) + ' min';
+    if (diff < 86400) return Math.floor(diff/3600) + 'h';
+    return new Date(date).toLocaleDateString('fr-FR');
+  }
+
+  async function markRead(id) {
+    try {
+      await fetch(`/api/patient/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      loadNotifications();
+    } catch (e) { showToast('Erreur.', 'error'); }
+  }
+
+  async function markAllRead() {
+    try {
+      const notifs = notifsList.filter(n => !n.lu);
+      await Promise.all(notifs.map(n =>
+        fetch(`/api/patient/notifications/${n.id}/read`, {
+          method: 'PUT',
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+      ));
+      showToast('✓ Toutes les notifications marquées comme lues.');
+      loadNotifications();
+    } catch (e) { showToast('Erreur.', 'error'); }
+  }
+
+  loadNotifications();
+</script>
+</body>
+</html>

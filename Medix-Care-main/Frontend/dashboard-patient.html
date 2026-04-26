@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mon Espace — Cabinet Médical</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body class="dash-body">
+<div class="dash-wrapper">
+
+  <!-- ─── SIDEBAR ─────────────────────── -->
+  <nav class="dash-sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon"><i class="fa-solid fa-hospital"></i></div>
+      <div class="logo-text">
+        <h2 class="brand">Medix Care</h2>
+        <small>Mon espace patient</small>
+      </div>
+    </div>
+    <ul class="nav-menu">
+      <li class="active"><a href="dashboard-patient.html"><i class="fa-solid fa-chart-line"></i> Tableau de bord</a></li>
+      <li><a href="rendezvous-patient.html"><i class="fa-solid fa-calendar-check"></i> Mes Rendez-vous</a></li>
+      <li><a href="dossier-patient.html"><i class="fa-solid fa-folder-open"></i> Mon Dossier</a></li>
+      <li><a href="ordonnances-patient.html"><i class="fa-solid fa-capsules"></i> Mes Ordonnances</a></li>
+      <li><a href="factures-patient.html"><i class="fa-solid fa-file-invoice-dollar"></i> Mes Factures</a></li>
+      <li><a href="notifications-patient.html"><i class="fa-solid fa-bell"></i> Notifications <span class="nav-badge" id="notif-count">0</span></a></li>
+      <li><a href="profil-patient.html"><i class="fa-solid fa-user"></i> Mon Profil</a></li>
+    </ul>
+    <div class="sidebar-user">
+      <div class="user-avatar" id="user-initials">PA</div>
+      <div class="user-details">
+        <span id="display-name">Patient</span>
+        <small>Patient</small>
+      </div>
+      <button onclick="handleLogout()" class="logout-btn">
+        <i class="fa-solid fa-power-off"></i>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ─── CONTENU ──────────────────────── -->
+  <main class="dash-content">
+
+    <!-- HEADER -->
+    <header class="content-header">
+      <div>
+        <h1>Tableau de bord</h1>
+        <p class="header-sub">Bonjour, <span id="header-name">Patient</span> 👋</p>
+      </div>
+      <div class="header-date">
+        <i class="fa-solid fa-calendar"></i>
+        <span id="current-date"></span>
+      </div>
+    </header>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card blue">
+        <div class="stat-icon blue"><i class="fa-solid fa-calendar-check"></i></div>
+        <div class="stat-info">
+          <h3 id="stat-rdv">0</h3>
+          <p>Mes Rendez-vous</p>
+        </div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-icon green"><i class="fa-solid fa-stethoscope"></i></div>
+        <div class="stat-info">
+          <h3 id="stat-consultations">0</h3>
+          <p>Consultations</p>
+        </div>
+      </div>
+      <div class="stat-card orange">
+        <div class="stat-icon warn"><i class="fa-solid fa-capsules"></i></div>
+        <div class="stat-info">
+          <h3 id="stat-ordonnances">0</h3>
+          <p>Ordonnances</p>
+        </div>
+      </div>
+      <div class="stat-card teal">
+        <div class="stat-icon teal"><i class="fa-solid fa-money-bill-wave"></i></div>
+        <div class="stat-info">
+          <h3 id="stat-factures">0 DA</h3>
+          <p>Total payé</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIGNE 2 -->
+    <div class="dash-row">
+
+      <!-- PROCHAINS RDV -->
+      <div class="white-card half">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-calendar-day"></i> Prochains rendez-vous</h2>
+          <a href="rendezvous-patient.html" class="voir-plus">Voir tout</a>
+        </div>
+        <ul class="rdv-list" id="rdv-list">
+          <li class="empty-item">
+            <i class="fa-solid fa-calendar-xmark"></i>
+            <p>Aucun rendez-vous</p>
+          </li>
+        </ul>
+        <div style="margin-top:16px">
+          <a href="rendezvous-patient.html" class="btn-primary" style="display:inline-flex; text-decoration:none">
+            <i class="fa-solid fa-plus"></i> Prendre un RDV
+          </a>
+        </div>
+      </div>
+
+      <!-- DERNIÈRES ORDONNANCES -->
+      <div class="white-card half">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-capsules"></i> Dernières ordonnances</h2>
+          <a href="ordonnances-patient.html" class="voir-plus">Voir tout</a>
+        </div>
+        <ul class="ordonnance-list" id="ordonnance-list">
+          <li class="empty-item">
+            <i class="fa-solid fa-capsules"></i>
+            <p>Aucune ordonnance</p>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- LIGNE 3 -->
+    <div class="dash-row">
+
+      <!-- DERNIÈRES CONSULTATIONS -->
+      <div class="white-card half">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-stethoscope"></i> Dernières consultations</h2>
+          <a href="dossier-patient.html" class="voir-plus">Voir dossier</a>
+        </div>
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Médecin</th>
+              <th>Prix</th>
+            </tr>
+          </thead>
+          <tbody id="consult-list">
+            <tr><td colspan="3" class="empty-td">Aucune consultation</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- NOTIFICATIONS -->
+      <div class="white-card half">
+        <div class="card-header">
+          <h2><i class="fa-solid fa-bell"></i> Notifications récentes</h2>
+          <a href="notifications-patient.html" class="voir-plus">Voir tout</a>
+        </div>
+        <ul class="notif-mini-list" id="notif-mini-list">
+          <li class="empty-item">
+            <i class="fa-solid fa-bell-slash"></i>
+            <p>Aucune notification</p>
+          </li>
+        </ul>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/main.js"></script>
+<script>
+  checkAccess('patient');
+
+  const user  = JSON.parse(localStorage.getItem('user'));
+  const token = localStorage.getItem('token');
+
+  if (user) {
+    document.getElementById('display-name').textContent = user.nom;
+    document.getElementById('header-name').textContent  = user.nom;
+    document.getElementById('user-initials').textContent =
+      user.nom.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+  }
+
+  const now = new Date();
+  document.getElementById('current-date').textContent =
+    now.toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+  // ─── CHARGER STATS ───────────────────
+  async function loadStats() {
+    try {
+      const res  = await fetch('/api/patient/stats', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      document.getElementById('stat-rdv').textContent           = data.rdv           || 0;
+      document.getElementById('stat-consultations').textContent = data.consultations  || 0;
+      document.getElementById('stat-ordonnances').textContent   = data.ordonnances    || 0;
+      document.getElementById('stat-factures').textContent      = (data.factures || 0) + ' DA';
+    } catch (e) {
+      console.log('Erreur stats', e);
+    }
+  }
+
+  // ─── CHARGER RDV ─────────────────────
+  async function loadRDV() {
+    try {
+      const res  = await fetch('/api/patient/rendezvous', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const list = document.getElementById('rdv-list');
+      const upcoming = data.filter(r => new Date(r.date) >= new Date()).slice(0, 4);
+
+      if (upcoming.length === 0) {
+        list.innerHTML = `<li class="empty-item"><i class="fa-solid fa-calendar-xmark"></i><p>Aucun rendez-vous à venir</p></li>`;
+        return;
+      }
+
+      list.innerHTML = upcoming.map(r => `
+        <li class="rdv-list-item">
+          <span class="rdv-time">${new Date(r.date).toLocaleDateString('fr-FR')}</span>
+          <div class="rdv-info">
+            <strong>${r.medecin_nom}</strong>
+            <small>${r.specialite || ''}</small>
+          </div>
+          <span class="rdv-statut ${r.statut}">
+            ${r.statut === 'confirme' ? '🟢 Confirmé' : r.statut === 'en_attente' ? '🟡 En attente' : '🔴 Annulé'}
+          </span>
+        </li>
+      `).join('');
+    } catch (e) {
+      console.log('Erreur RDV', e);
+    }
+  }
+
+  // ─── CHARGER ORDONNANCES ─────────────
+  async function loadOrdonnances() {
+    try {
+      const res  = await fetch('/api/patient/ordonnances', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const list = document.getElementById('ordonnance-list');
+
+      if (data.length === 0) {
+        list.innerHTML = `<li class="empty-item"><i class="fa-solid fa-capsules"></i><p>Aucune ordonnance</p></li>`;
+        return;
+      }
+
+      list.innerHTML = data.slice(0, 4).map(o => `
+        <li class="ordo-item">
+          <div class="h-icon ordonnance"><i class="fa-solid fa-capsules"></i></div>
+          <div class="h-detail">
+            <p>${o.medicaments || 'Médicaments'}</p>
+            <small>Dr. ${o.medecin_nom} — ${new Date(o.date).toLocaleDateString('fr-FR')}</small>
+          </div>
+        </li>
+      `).join('');
+    } catch (e) {
+      console.log('Erreur ordonnances', e);
+    }
+  }
+
+  // ─── CHARGER CONSULTATIONS ───────────
+  async function loadConsultations() {
+    try {
+      const res  = await fetch('/api/patient/dossier', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const tbody = document.getElementById('consult-list');
+
+      if (!data.consultations || data.consultations.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="3" class="empty-td">Aucune consultation</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = data.consultations.slice(0, 5).map(c => `
+        <tr>
+          <td>${new Date(c.date).toLocaleDateString('fr-FR')}</td>
+          <td>${c.medecin_nom}</td>
+          <td><span class="badge badge-green">${c.prix || 0} DA</span></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      console.log('Erreur consultations', e);
+    }
+  }
+
+  // ─── CHARGER NOTIFICATIONS ───────────
+  async function loadNotifications() {
+    try {
+      const res  = await fetch('/api/patient/notifications', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const list = document.getElementById('notif-mini-list');
+
+      if (data.length === 0) {
+        list.innerHTML = `<li class="empty-item"><i class="fa-solid fa-bell-slash"></i><p>Aucune notification</p></li>`;
+        return;
+      }
+
+      list.innerHTML = data.slice(0, 4).map(n => `
+        <li class="notif-mini-item ${n.lu ? '' : 'unread'}">
+          <div class="notif-icon ${n.lu ? 'gray' : 'blue'}">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div class="h-detail">
+            <p>${n.message}</p>
+            <small>${new Date(n.created_at).toLocaleDateString('fr-FR')}</small>
+          </div>
+        </li>
+      `).join('');
+
+      // badge
+      const unread = data.filter(n => !n.lu).length;
+      const badge  = document.getElementById('notif-count');
+      if (badge) {
+        badge.textContent   = unread;
+        badge.style.display = unread > 0 ? 'inline' : 'none';
+      }
+
+    } catch (e) {
+      console.log('Erreur notifications', e);
+    }
+  }
+
+  // ─── INIT ─────────────────────────────
+  loadStats();
+  loadRDV();
+  loadOrdonnances();
+  loadConsultations();
+  loadNotifications();
+</script>
+</body>
+</html>
